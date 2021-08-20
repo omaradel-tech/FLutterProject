@@ -103,6 +103,9 @@ class _PostViewState extends State<PostView> {
                                 _db.updateLike(Posts(like:like,totalLike:totallike,PostID:widget.DocID),widget.user.email.toString());
                               }
                               );
+                              setState(() {
+
+                              });
                             },color:widget._postMap['${x[0]}Like']!=null?widget._postMap['${x[0]}Like']==0?Colors.black:Colors.blue:Colors.black,),
                             Text('Like',style: TextStyle(fontSize: 16),),
                             // Text(""),

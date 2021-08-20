@@ -1,6 +1,7 @@
 import 'package:application/Models/UsersInfo.dart';
 import 'package:application/SocialMediaApp/Services/FireStore.dart';
 import 'package:application/SocialMediaApp/Services/NotificationService.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class NotificationScreenPage extends StatefulWidget {
@@ -15,23 +16,21 @@ class _NotificationScreenPageState extends State<NotificationScreenPage> {
   NotificationService notificationService = NotificationService();
   database _db = new database();
   // ignore: non_constant_identifier_names
-  late Stream NotifyStream;
+  late Stream<QuerySnapshot>? NotifyStream;
 
   // ignore: non_constant_identifier_names
-  GetNotify(){
-    _db.GetNotfications(widget.user.email.toString()).then((snap){
-     setState(() {
-       NotifyStream=snap;
-       notificationService.Initialize();
-     });
+  GetNotify() {
+    setState(() {
+      notificationService.Initialize();
     });
+
   }
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-   GetNotify();
+    GetNotify();
   }
 
   @override
@@ -43,55 +42,72 @@ class _NotificationScreenPageState extends State<NotificationScreenPage> {
             width: ScreenWidth,
             child: SingleChildScrollView(
                 child: Container(
-              width: ScreenWidth,
-              height: ScreenHeight,
-              child: StreamBuilder(
-                  stream: NotifyStream,
-                  builder: (context, AsyncSnapshot snap) {
-                    if (snap.connectionState == ConnectionState.waiting) {
-                      return CircularProgressIndicator();
-                    } else if (snap.connectionState == ConnectionState.active ||
-                        snap.connectionState == ConnectionState.done) {
-                      if (snap.hasError) {
-                        return Text('Error!');
-                      } else if (snap.hasData == false) {
-                        return Text('Empty Data');
-                      } else {
-                        return Expanded(
-                          child: ListView.builder(
-                              itemCount: snap.data.docs.length,
-                              itemBuilder: (context, index) {
-                                Map _postMap = snap.data.docs[index].data();
-                                notificationService.InstanceNotification(_postMap['name'],_postMap['Text']);
-                                return Padding(
-                                  padding: const EdgeInsets.only(top: 10),
-                                  child: Container(
-                                      width: ScreenWidth,
-                                      decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(22),
-                                          border: Border.all(
-                                              color: Colors.indigo, width: 1)),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Container(
-                                            child: Text(
-                                          "${_postMap['name']}" +
-                                              " " +
-                                              "his Account" +
-                                              "(${_postMap['Sender']})" +
-                                              "${_postMap['Text']} AT ${_postMap['Date']}",
-                                          style: TextStyle(fontSize: 15),
-                                        ))
-                                        ,
-                                      )),
-                                );
-                              }),
-                        );
-                      }
-                    } else {
-                      return Text('Error');
-                    }
-                  }),
-            ))));
+                    width: ScreenWidth,
+                    height: ScreenHeight,
+                    child: FutureBuilder(
+                      future:  _db.GetNotfications(widget.user.email.toString()),
+                      builder: (context, AsyncSnapshot snap) {
+                        NotifyStream=snap.data;
+                        return StreamBuilder(
+                            stream: NotifyStream,
+                            builder: (context, AsyncSnapshot snap) {
+                              if (snap.connectionState ==
+                                  ConnectionState.waiting) {
+                                return CircularProgressIndicator();
+                              } else if (snap.connectionState ==
+                                      ConnectionState.active ||
+                                  snap.connectionState ==
+                                      ConnectionState.done) {
+                                if (snap.hasError) {
+                                  return Text('Error!');
+                                } else if (snap.hasData == false) {
+                                  return Text('Empty Data');
+                                } else {
+                                  return Expanded(
+                                    child: ListView.builder(
+                                        itemCount: snap.data.docs.length,
+                                        itemBuilder: (context, index) {
+                                          Map _postMap =
+                                              snap.data.docs[index].data();
+                                          notificationService
+                                              .InstanceNotification(
+                                                  _postMap['name'],
+                                                  _postMap['Text']);
+                                          return Padding(
+                                            padding:
+                                                const EdgeInsets.only(top: 10),
+                                            child: Container(
+                                                width: ScreenWidth,
+                                                decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            22),
+                                                    border: Border.all(
+                                                        color: Colors.indigo,
+                                                        width: 1)),
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(8.0),
+                                                  child: Container(
+                                                      child: Text(
+                                                    "${_postMap['name']}" +
+                                                        " " +
+                                                        "his Account" +
+                                                        "(${_postMap['Sender']})" +
+                                                        "${_postMap['Text']} AT ${_postMap['Date']}",
+                                                    style:
+                                                        TextStyle(fontSize: 15),
+                                                  )),
+                                                )),
+                                          );
+                                        }),
+                                  );
+                                }
+                              } else {
+                                return Text('Error');
+                              }
+                            });
+                      },
+                    )))));
   }
 }

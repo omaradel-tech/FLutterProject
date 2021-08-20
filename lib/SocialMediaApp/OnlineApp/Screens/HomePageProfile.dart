@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:application/SocialMediaApp/OnlineApp/Screens/PostView.dart';
 import 'package:application/SocialMediaApp/Services/FireStore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:application/Models/PostInfo.dart';
@@ -33,7 +34,7 @@ class _HomePageProfileState extends State<HomePageProfile> {
   database _db= new database();
   // ignore: non_constant_identifier_names
   //late Future<List> Friends;
-  late Stream postStream;
+  late Stream<QuerySnapshot>? postStream;
   List list=[];
  /* getPost(){
     _db.getPosts(widget.user.email.toString()).then((snap){
@@ -46,12 +47,14 @@ class _HomePageProfileState extends State<HomePageProfile> {
   }*/
 
 
-  getPosts() {
+getPosts()async{
     _db.getPosts(widget.user.email.toString()).then((snapshots) {
-      setState(() {
-        postStream = snapshots;
-      });
+         setState((){
+            postStream = snapshots;
+         });
     });
+
+    return postStream;
   }
   @override
   void initState() {
@@ -143,34 +146,38 @@ class _HomePageProfileState extends State<HomePageProfile> {
                   ],
                 ),
               ),
-              postStream==null? SizedBox():  Container(
+              // ignore: unnecessary_null_comparison
+             Container(
                 height: ScreenHeight,
                 width: ScreenWidth,
-                child: StreamBuilder(
-                  stream:postStream,
+                child:FutureBuilder(
+                 future : _db.getPosts(widget.user.email.toString()),
                   builder: (context,AsyncSnapshot snap){
-                    if(snap.connectionState==ConnectionState.waiting){
-                      return CircularProgressIndicator();
-                    }else if(snap.connectionState==ConnectionState.active||snap.connectionState==ConnectionState.done){
-                      if(snap.hasError){
-                        return Text("Error");
-                      }else if(snap.hasData==false){
-                        return Text("Empty");
-                      }else{
-                        return Expanded(child: ListView.builder(itemCount: snap.data.docs.length,
-                            itemBuilder: (BuildContext contex, int index) {
-                              Map _postMap=snap.data.docs[index].data();
-                              return PostView(widget.user,_postMap,snap.data.docs[index].id);
-                            })
-
-                        );
-                      }
-                    }
-                    else{
-                      return Text("Error");
-                    }
-                  },
-                )
+                   postStream=snap.data;
+                        return StreamBuilder<QuerySnapshot>(stream: postStream,builder: (context,AsyncSnapshot snapshot){
+                                      if(snapshot.connectionState==ConnectionState.waiting){
+                                      return Center(child: SizedBox(child: CircularProgressIndicator(),width:100 ,height: 100,));
+                                      }else if(snapshot.connectionState==ConnectionState.active||snapshot.connectionState==ConnectionState.done){
+                                        if(snapshot.hasError){
+                                          return Text("Error");
+                                        }else if(snapshot.hasData==false){
+                                          return Text("Empty");
+                                        }else{
+                                          return Expanded (child: ListView.builder(itemCount:snapshot.data.docs.length,
+                                              itemBuilder: (BuildContext contex, int index) {
+                                                Map _postMap=snapshot.data.docs[index].data();
+                                                print(snapshot.data.docs.length);
+                                                return PostView(widget.user,_postMap,snapshot.data.docs[index].id);
+                                              })
+                                          );
+                                        }
+                                      }else{
+                                        return Text("Error");
+                                      }
+                        });
+                   }
+                   ,
+                ),
               ),
             ],
           )),
@@ -182,6 +189,8 @@ class _HomePageProfileState extends State<HomePageProfile> {
 
 
   }
+
+
 
 
 

@@ -22,14 +22,16 @@ class database{
   savePost(Posts post)async{
     await PostsRef.doc().set(post.toMap());
   }
-  getPosts(String email)async{
+
+   getPosts(String email)async{
    late List list=[];
    await getFriendsList(email).then((snap){
-      list=snap as List;
+     list=  snap as List;
     });
    list.add(email);
-    return  PostsRef.where('Owner',whereIn:list).snapshots();
+    return await PostsRef.where('Owner',whereIn:list).snapshots();
   }
+
   updateLike(Posts post,String email){
     var x= email.split('@');
     PostsRef.doc(post.PostID).update({
