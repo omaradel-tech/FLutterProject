@@ -42,14 +42,19 @@ class _ContactsScreenState extends State<ContactsScreen> {
               width: ScreenWidth,
               height: ScreenHeight,
               child: FutureBuilder(
-                future:  _db.getFriendsReq(widget.user.email.toString()),
+                future: _db.getFriendsReq(widget.user.email.toString()),
                 builder: (context, AsyncSnapshot snap) {
-                  ContactStream=snap.data;
+                  ContactStream = snap.data;
                   return StreamBuilder(
                       stream: ContactStream,
                       builder: (context, AsyncSnapshot snap) {
                         if (snap.connectionState == ConnectionState.waiting) {
-                          return Center(child: SizedBox(child: CircularProgressIndicator(),width:100 ,height: 100,));
+                          return Center(
+                              child: SizedBox(
+                            child: CircularProgressIndicator(),
+                            width: 100,
+                            height: 100,
+                          ));
                         } else if (snap.connectionState ==
                                 ConnectionState.active ||
                             snap.connectionState == ConnectionState.done) {
